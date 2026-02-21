@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/TerminalGame.dir/src/main.cpp.o CMakeFiles/TerminalGame.dir/src/world.cpp.o CMakeFiles/TerminalGame.dir/src/character.cpp.o CMakeFiles/TerminalGame.dir/src/mobs.cpp.o CMakeFiles/TerminalGame.dir/src/projectiles.cpp.o -o TerminalGame  -L/usr/lib/x86_64-linux-gnu  -lSDL2 
