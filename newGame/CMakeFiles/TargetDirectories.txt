@@ -1,0 +1,3 @@
+/home/virdult/game/newGame/CMakeFiles/TerminalGame.dir
+/home/virdult/game/newGame/CMakeFiles/edit_cache.dir
+/home/virdult/game/newGame/CMakeFiles/rebuild_cache.dir
