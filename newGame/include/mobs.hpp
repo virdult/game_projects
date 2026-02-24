@@ -4,24 +4,19 @@
 #include <vector>
 #include <string>
 
-enum class MobType { CRAWLER, WALKER, FLYER };
+enum class MobType { SENTRY, CHARGER, ARCHER };
 
 struct Mob {
-    float x, y;
-    float speed;
-    int health;
-    int width, height;
+    float x, y, speed;
+    int health, width, height;
     MobType type;
     std::vector<std::string> sprite;
-    bool isDead = false;
-    
-    // Flyer specific logic
-    float originalY;
-    bool isRetreating = false;
-    float retreatTargetX = 0;
+    bool isDead = false, isCharging = false, hasCharged = false;
+    float shootTimer = 0.0f, animTimer = 0.0f;
 
     Mob(float startX, float startY, MobType t);
     void update(float deltaTime, float playerX, float playerY);
+    void updateAnimation(float playerX);
 };
 
 #endif

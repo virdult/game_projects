@@ -7,41 +7,35 @@
 #include "projectiles.hpp"
 #include "mobs.hpp"
 
-struct BackgroundObject {
-    float x;
-    int y;
-    int width;
-    int height;
+struct Obstacle {
+    float x, y;
+    int width, height;
     std::vector<std::string> sprite;
-    int layer; // 0: Sun, 1: Small Clouds, 2: Mid Background, 3: Foreground
+    bool isSolid; 
 };
 
 class World {
 private:
-    int width, height;
-    int groundLevel;
-    float globalOffset = 0.0f;
-    std::vector<BackgroundObject> bgObjects;
+    int width, height, groundLevel;
+    float globalOffset = 0.0f, nextSpawnX = 0.0f;
+    int lastSegmentType = -1; 
+    std::vector<Obstacle> obstacles;
+    void resetStateInitialization(); 
 
 public:
-    std::vector<Projectile> activeProjectiles;
-    int maxAmmo = 8;
-    int currentAmmo = 8;
-    float reloadTimer = 0.0f;
-    float cooldownTimer = 0.0f;
-    bool isReloading = false;
-    
+    std::vector<Projectile> activeProjectiles, enemyProjectiles;
     std::vector<Mob> activeMobs;
-    void spawnMob(MobType type, bool fromRight);
-    void updateWorld(float deltaTime, float playerX, float playerY, float playerVelX);
+    int maxAmmo = 8, currentAmmo = 8, score = 0;
+    float reloadTimer = 0.0f, cooldownTimer = 0.0f, autoScrollSpeed = 0.5f;
+    bool isReloading = false, gameOver = false;
 
     World(int w, int h);
-    void addObject(int x, int y, std::vector<std::string> sprite, int layer);
-    void generateWorld();
-    void updateProjectiles(float deltaTime, float playerVelX);
+    void updateWorld(float deltaTime, Character& player);
     void drawFrame(const Character& player);
-    void startReload(bool manual);
+    void spawnSegment(int type, float startX);
+    void reset(Character& player);
+    void startReload(bool manual); // Linker hatasını çözen deklarasyon
     int getGroundLevel() const { return groundLevel; }
 };
 
-#endif // WORLD_HPP
+#endif
