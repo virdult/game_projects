@@ -16,7 +16,7 @@ public:
     CharState currentState;
     int animFrame = 0, animTimer = 0;
     std::vector<std::string> sprite;
-    int spriteWidth = 9, spriteHeight = 6;
+    int spriteWidth = 9, spriteHeight = 6, collisionHeight = 6;
 
     Character(float startX, float startY);
     void update(float groundLevel, int maxWidth, bool moveLeft, bool moveRight, bool isCrouching);

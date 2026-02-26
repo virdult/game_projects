@@ -8,12 +8,14 @@ Character::Character(float startX, float startY) : x(startX), y(startY) {
 }
 
 void Character::update(float groundLevel, int maxWidth, bool moveLeft, bool moveRight, bool isCrouching) {
+    // 1. HORIZONTAL LOGIC
     if (moveRight) { velocityX = 1.0f; facingRight = true; }
     else if (moveLeft) { velocityX = -1.5f; }
     else { velocityX = 0.0f; }
 
     x += velocityX;
 
+    // 2. SCREEN CONSTRAINTS
     float minLimit = -(float)spriteWidth; 
     float maxLimit = maxWidth * 0.80f;
     isPushingRight = (moveRight && x >= maxLimit);
@@ -21,20 +23,25 @@ void Character::update(float groundLevel, int maxWidth, bool moveLeft, bool move
     if (x < minLimit) x = minLimit;
     if (x > maxLimit) x = maxLimit;
 
+    // 3. PHYSICS & CROUCH LOGIC
     velocityY += 0.2f; 
     y += velocityY;
 
-    if (y >= groundLevel - (spriteHeight - 1)) {
-        y = groundLevel - (spriteHeight - 1);
-        velocityY = 0.0f; isJumping = false;
+    if (y >= groundLevel - 5) {
+        y = (float)groundLevel - 5;
+        velocityY = 0.0f;
+        isJumping = false;
     }
 
-    if (isJumping || velocityY < 0) currentState = CharState::JUMPING;
-    else if (isCrouching) currentState = CharState::CROUCHING;
-    else {
+    if (isJumping || velocityY < 0) {
+        currentState = CharState::JUMPING;
+    } else if (isCrouching) {
+        currentState = CharState::CROUCHING;
+    } else {
         currentState = CharState::RUNNING;
         if (++animTimer > 5) { animFrame = !animFrame; animTimer = 0; }
     }
+
     updateSprite();
 }
 
