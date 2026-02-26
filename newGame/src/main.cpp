@@ -18,14 +18,21 @@ int main() {
 
         if (!gameWorld.gameOver) {
             bool mL = state[SDL_SCANCODE_A], mR = state[SDL_SCANCODE_D], iC = state[SDL_SCANCODE_S];
+            bool currentEKey = state[SDL_SCANCODE_E];
+            
             if (state[SDL_SCANCODE_W]) player.jump();
-            if (state[SDL_SCANCODE_SPACE] && gameWorld.cooldownTimer <= 0 && !gameWorld.isReloading && gameWorld.currentAmmo > 0) {
+            if (state[SDL_SCANCODE_SPACE] && gameWorld.cooldownTimer <= 0 && player.currentAmmo > 0) {
                 float shotY = iC ? (player.y + 4) : (player.y + 2);
                 gameWorld.activeProjectiles.emplace_back(player.x + 7, shotY, 4.0f);
-                gameWorld.currentAmmo--; gameWorld.cooldownTimer = 0.20f;
-                if (gameWorld.currentAmmo <= 0) gameWorld.startReload(false);
+                player.currentAmmo--; gameWorld.cooldownTimer = 0.20f;
             }
-            if (state[SDL_SCANCODE_R]) gameWorld.startReload(true);
+            
+            // Melee attack on key press (not hold)
+            if (currentEKey && !player.wasEKeyPressed) {
+                player.startMeleeAttack();
+            }
+            player.wasEKeyPressed = currentEKey;
+            
             player.update(gameWorld.getGroundLevel(), 204, mL, mR, iC);
             gameWorld.updateWorld(fTime, player);
             if (gameWorld.cooldownTimer > 0) gameWorld.cooldownTimer -= fTime;

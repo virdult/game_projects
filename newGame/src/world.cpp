@@ -11,7 +11,7 @@ World::World(int w, int h) : width(w), height(h) {
 
 void World::resetStateInitialization() {
     score = 0; gameOver = false; globalOffset = 0; nextSpawnX = 0;
-    currentAmmo = maxAmmo; isReloading = false; lastSegmentType = -1;
+    lastSegmentType = -1;
     obstacles.clear(); activeMobs.clear(); activeProjectiles.clear(); enemyProjectiles.clear();
     
     int first = rand() % 3;
@@ -144,10 +144,6 @@ void World::updateWorld(float deltaTime, Character& player) {
     if (player.x + player.spriteWidth <= 0) { gameOver = true; return; }
     
     // Status Timers
-    if (isReloading) { 
-        reloadTimer -= deltaTime; 
-        if (reloadTimer <= 0) { currentAmmo = maxAmmo; isReloading = false; } 
-    }
     if (player.iFrameTimer > 0) player.iFrameTimer -= deltaTime;
 
     // 3. SOLID WALL & PLATFORM LOGIC (Directional Collision)
@@ -266,7 +262,53 @@ void World::updateWorld(float deltaTime, Character& player) {
             if (!p.isDead && p.x >= m.x && p.x <= m.x + m.width && p.y >= m.y && p.y <= m.y + m.height) {
                 m.health--; 
                 p.isDead = true;
-                if (m.health <= 0) { m.isDead = true; score++; }
+                if (m.health <= 0) { 
+                    m.isDead = true; 
+                    score++; 
+                    // Grant ammo on kill
+                    if (player.currentAmmo < player.maxAmmo) {
+                        player.currentAmmo++;
+                    }
+                }
+            }
+        }
+        
+        // Melee Attack vs Mob
+        if (player.isMeleeAttacking) {
+            float swordRange = 8.0f; // 8 tile range horizontally
+            float swordX = player.facingRight ? player.x + 9 : player.x - 8; // Sword starting position
+            
+            // Sword arc (from top to bottom position) - only hits in the lower half of the swing
+            float hitboxTop = player.y - 3;
+            float hitboxBottom = player.y + 6;
+            
+            // Check collision: sword reaches the mob position horizontally and vertically
+            if (player.facingRight) {
+                if (swordX <= m.x + m.width && swordX >= m.x - swordRange &&
+                    m.y + m.height > hitboxTop && m.y < hitboxBottom) {
+                    m.health--; 
+                    if (m.health <= 0) { 
+                        m.isDead = true; 
+                        score++; 
+                        // Grant ammo on kill
+                        if (player.currentAmmo < player.maxAmmo) {
+                            player.currentAmmo++;
+                        }
+                    }
+                }
+            } else {
+                if (swordX >= m.x && swordX <= m.x + m.width + swordRange &&
+                    m.y + m.height > hitboxTop && m.y < hitboxBottom) {
+                    m.health--; 
+                    if (m.health <= 0) { 
+                        m.isDead = true; 
+                        score++; 
+                        // Grant ammo on kill
+                        if (player.currentAmmo < player.maxAmmo) {
+                            player.currentAmmo++;
+                        }
+                    }
+                }
             }
         }
     }
@@ -347,6 +389,37 @@ void World::drawFrame(const Character& player) {
             }
         }
     }
+    
+    // 6.5 Draw Melee Axe Attack Animation (separate from character)
+    if (player.isMeleeAttacking) {
+        float progress = 1.0f - (player.meleeAttackTimer / 0.3f);
+        int frame = (int)(progress * 10);
+        if (frame > 9) frame = 9;
+        
+        int axeX = (int)player.x + 7; // Right of character
+        int axeY = (int)player.y;
+        
+        std::vector<std::string> axeFrames[] = {
+            {"        ", "        ", "--     ", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "-----  ", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "--------", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "---------->", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "----------->", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "---------->", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "--------", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "-----  ", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "--     ", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "       ", "        ", "        ", "        ", "        ", "        "}
+        };
+        
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < (int)axeFrames[frame][i].length(); j++) {
+                if (axeFrames[frame][i][j] != ' ') {
+                    safeSet(axeX + j, axeY + i, axeFrames[frame][i][j]);
+                }
+            }
+        }
+    }
 
     // 7. Draw HUD (Strict Bounds Checking for terminal resizing safety)
     // HP Display
@@ -359,10 +432,21 @@ void World::drawFrame(const Character& player) {
     int scX = (width / 2) - (scStr.length() / 2);
     for(int i=0; i<(int)scStr.length(); i++) safeSet(scX + i, 2, scStr[i]);
 
-    // Ammo/Reloading Display
-    std::string amStr = isReloading ? "RELOADING..." : "AMMO: " + std::to_string(currentAmmo) + "/" + std::to_string(maxAmmo);
+    // Ammo Display
+    std::string amStr = "AMMO: " + std::to_string(player.currentAmmo) + "/" + std::to_string(player.maxAmmo);
     int amX = width - (int)amStr.length() - 4;
     for(int i=0; i<(int)amStr.length(); i++) safeSet(amX + i, 2, amStr[i]);
+    
+    // Melee Cooldown Display
+    if (player.meleeCooldownTimer > 0) {
+        std::string meleeStr = "E: [COOLDOWN]";
+        int meleeX = 2;
+        for(int i=0; i<(int)meleeStr.length(); i++) safeSet(meleeX + i, 3, meleeStr[i]);
+    } else {
+        std::string meleeStr = "E: MELEE READY";
+        int meleeX = 2;
+        for(int i=0; i<(int)meleeStr.length(); i++) safeSet(meleeX + i, 3, meleeStr[i]);
+    }
 
     // 8. Game Over Overlay
     if (gameOver) {
@@ -395,14 +479,12 @@ void World::drawFrame(const Character& player) {
     std::cout << std::flush;
 }
 
-void World::startReload(bool manual) { 
-    if (isReloading || currentAmmo == maxAmmo) return; 
-    isReloading = true; 
-    reloadTimer = manual ? 0.8f : 1.0f; 
-}
-
 void World::reset(Character& player) {
     resetStateInitialization();
-    player.health = 3; player.x = 40; player.y = groundLevel - 6; 
-    player.currentState = CharState::RUNNING; player.iFrameTimer = 0;
+    player.health = 3; 
+    player.x = 40; 
+    player.y = groundLevel - 6; 
+    player.currentState = CharState::RUNNING; 
+    player.iFrameTimer = 0;
+    player.currentAmmo = player.maxAmmo;
 }

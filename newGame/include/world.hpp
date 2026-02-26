@@ -25,16 +25,15 @@ private:
 public:
     std::vector<Projectile> activeProjectiles, enemyProjectiles;
     std::vector<Mob> activeMobs;
-    int maxAmmo = 8, currentAmmo = 8, score = 0;
-    float reloadTimer = 0.0f, cooldownTimer = 0.0f, autoScrollSpeed = 0.5f;
-    bool isReloading = false, gameOver = false;
+    int score = 0;
+    float cooldownTimer = 0.0f, autoScrollSpeed = 0.5f;
+    bool gameOver = false;
 
     World(int w, int h);
     void updateWorld(float deltaTime, Character& player);
     void drawFrame(const Character& player);
     void spawnSegment(int type, float startX);
     void reset(Character& player);
-    void startReload(bool manual); // Linker hatasını çözen deklarasyon
     int getGroundLevel() const { return groundLevel; }
 };
 

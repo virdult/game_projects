@@ -41,23 +41,52 @@ void Character::update(float groundLevel, int maxWidth, bool moveLeft, bool move
         currentState = CharState::RUNNING;
         if (++animTimer > 5) { animFrame = !animFrame; animTimer = 0; }
     }
+    
+    // 4. MELEE ATTACK UPDATE
+    if (isMeleeAttacking) {
+        meleeAttackTimer -= 0.030f; // Decrement based on frame time
+        if (meleeAttackTimer <= 0) {
+            isMeleeAttacking = false;
+            meleeCooldownTimer = 0.2f; // Start cooldown
+        }
+    }
+    
+    if (meleeCooldownTimer > 0) {
+        meleeCooldownTimer -= 0.030f;
+    }
 
     updateSprite();
 }
 
 void Character::jump() { if (!isJumping) { velocityY = -2.5f; isJumping = true; } }
 
+void Character::startMeleeAttack() { 
+    if (meleeCooldownTimer <= 0 && !isMeleeAttacking) { 
+        isMeleeAttacking = true; 
+        meleeAttackTimer = 0.3f; // 10 frames * 30ms = 300ms
+    } 
+}
+
 void Character::updateSprite() {
+    //When attacking melee
+    if (isMeleeAttacking) {
+        sprite = std::vector<std::string>{
+            "      ()  ", 
+            "     _-  ", 
+            "   -/ \\  ", 
+            "     /   ", 
+            "    /|   ", 
+            "   /     "
+        };
+        return;
+    }
+    // Normal running/jumping/crouching animations
     if (currentState == CharState::CROUCHING) {
-        sprite = facingRight ? std::vector<std::string>{"         ", "         ", "   ()    ", "   ||_~  ", "   ||    ", " _/_\\_   "}
-                             : std::vector<std::string>{"         ", "         ", "    ()   ", "  ~_||   ", "    ||   ", "  _/_\\_  "};
+        sprite = std::vector<std::string>{"         ", "         ", "   ()    ", "   ||_~  ", "   ||    ", " _/_\\_   "};
     } else if (currentState == CharState::RUNNING) {
-        if (facingRight) sprite = animFrame ? std::vector<std::string>{"       ()", "     _-  ", "  --/    ", "     /   ", "    / \\  ", "  _/   > "} 
-                                            : std::vector<std::string>{"       ()", "     _-  ", "  --/    ", "     /   ", "    < \\  ", "       \\_"};
-        else sprite = animFrame ? std::vector<std::string>{"()       ", "   -_    ", "    \\--  ", "   \\     ", "  / \\    ", " <   \\_  "}
-                                : std::vector<std::string>{"()       ", "   -_    ", "    \\--  ", "   \\     ", "  / >    ", "_/       "};
+        sprite = animFrame ? std::vector<std::string>{"       ()", "     _-  ", "  --/    ", "     /   ", "    / \\  ", "  _/   > "} 
+                           : std::vector<std::string>{"       ()", "     _-  ", "  --/    ", "     /   ", "    < \\  ", "       \\_"};
     } else {
-        sprite = facingRight ? std::vector<std::string>{"       ()", "     _-  ", "  --/    ", "     /   ", "    /|   ", "   /     "}
-                             : std::vector<std::string>{"()       ", "   -_    ", "    \\--  ", "   \\     ", "   |\\    ", "    \\    "};
+        sprite = std::vector<std::string>{"       ()", "     _-  ", "  --/    ", "     /   ", "    /|   ", "   /     "};
     }
 }
