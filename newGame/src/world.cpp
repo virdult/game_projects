@@ -14,7 +14,7 @@ void World::resetStateInitialization() {
     lastSegmentType = -1;
     obstacles.clear(); activeMobs.clear(); activeProjectiles.clear(); enemyProjectiles.clear();
     
-    int first = rand() % 3;
+    int first = 3;
     spawnSegment(first, 100);
     lastSegmentType = first;
     
@@ -48,7 +48,7 @@ void World::spawnSegment(int type, float startX) {
         case 2: // SENTRY WALL
             for(int i=0; i<3; i++) {
                 Obstacle w; w.x = startX + (i*45) + 15; w.y = groundLevel - 5;
-                w.width = 2; w.height = 5; w.isSolid = true; w.sprite = {"##","##","##","##","##"};
+                w.width = 4; w.height = 5; w.isSolid = true; w.sprite = {"####","####","####","####","####"};
                 obstacles.push_back(w);
                 activeMobs.emplace_back(w.x + 8, spawnY, MobType::SENTRY);
             }
@@ -56,7 +56,7 @@ void World::spawnSegment(int type, float startX) {
         case 3: // THE SLIDE & CLIMB
             {
                 float leftWallX = startX + 24;
-                int wallGap = 5; // Gap for sliding
+                int wallGap = 5; 
                 
                 // 1. LEFT WALL
                 Obstacle leftWall;
@@ -64,17 +64,17 @@ void World::spawnSegment(int type, float startX) {
                 leftWall.y = (float)groundLevel - 38; 
                 leftWall.width = 4;
                 leftWall.height = 40 - wallGap; 
-                leftWall.isSolid = true;
+                leftWall.isSolid = true; // Acts as a wall
                 leftWall.sprite = std::vector<std::string>(leftWall.height, "||||");
                 obstacles.push_back(leftWall);
 
-                // 2. MID-PLATFORM (Attached to the right of the left wall)
+                // 2. MID-PLATFORM
                 Obstacle midPlat;
                 midPlat.x = leftWallX + 4;
-                midPlat.y = (float)groundLevel - 14; // Mid-height
+                midPlat.y = (float)groundLevel - 14; 
                 midPlat.width = 15;
                 midPlat.height = 1;
-                midPlat.isSolid = false; // Semi-solid platform
+                midPlat.isSolid = false; // Passable from below
                 midPlat.sprite = {"==============="};
                 obstacles.push_back(midPlat);
 
@@ -85,16 +85,17 @@ void World::spawnSegment(int type, float startX) {
                 build.y = (float)groundLevel - 40;
                 build.width = 40;
                 build.height = 40;
-                build.isSolid = true;
+                build.isSolid = true; // Acts as a wall
                 build.sprite = std::vector<std::string>(build.height, std::string(build.width, '|'));
                 obstacles.push_back(build);
 
                 // 4. TWO PLATFORMS ON BUILDING'S LEFT
-                // Lower Platform (Reach from Mid-Platform)
+                // Lower Platform
                 Obstacle bPlat1;
                 bPlat1.x = buildX - 18;
                 bPlat1.y = (float)groundLevel - 22;
                 bPlat1.width = 18; bPlat1.height = 1;
+                bPlat1.isSolid = false; // Add this to allow jumping through!
                 bPlat1.sprite = {"------------------"};
                 obstacles.push_back(bPlat1);
 
@@ -103,12 +104,114 @@ void World::spawnSegment(int type, float startX) {
                 bPlat2.x = buildX - 18;
                 bPlat2.y = (float)groundLevel - 36;
                 bPlat2.width = 18; bPlat2.height = 1;
+                bPlat2.isSolid = false; // Add this to allow jumping through!
                 bPlat2.sprite = {"------------------"};
                 obstacles.push_back(bPlat2);
 
-                // Mobs: Spearman under the left wall, Archer on building top
+                // Mobs
                 activeMobs.emplace_back(leftWallX + 10, (float)groundLevel - 5, MobType::SENTRY);
                 activeMobs.emplace_back(buildX + 5, (float)groundLevel - 46, MobType::ARCHER);
+                break;
+            }
+        case 4: // THE FLOOR IS LAVA
+            {
+                // Ground Spikes using the new isHazard flag
+                Obstacle spikes;
+                spikes.x = startX + 10; 
+                spikes.y = (float)groundLevel - 2;
+                spikes.width = 100; 
+                spikes.height = 2; 
+                spikes.isSolid = false; 
+                spikes.isHazard = true; 
+                spikes.sprite = {"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", 
+                                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"};
+                obstacles.push_back(spikes);
+
+                // Lowered platforms to match player jump height (approx 15 units max)
+                for(int i = 0; i < 3; i++) {
+                    Obstacle p; 
+                    p.x = startX + 20 + (i * 30); 
+                    p.y = (float)groundLevel - 5 - (i * 4); 
+                    p.width = 11; 
+                    p.height = 1; 
+                    p.isSolid = false; 
+                    p.sprite = {"==========="};
+                    obstacles.push_back(p);
+                    
+                    if(i == 2) {
+                        activeMobs.emplace_back(p.x + 2, p.y - 6, MobType::ARCHER);
+                    }
+                }
+                activeMobs.emplace_back(startX + 115, (float)groundLevel - 5, MobType::SENTRY);
+                break;
+            }
+
+        case 5: // ZIG-ZAG TOWER
+            {
+                float center = startX + 60;
+                
+                // Lowered pillar height to 30 to fit terminal constraints
+                Obstacle pillar; 
+                pillar.x = center; 
+                pillar.y = (float)groundLevel - 30; 
+                pillar.width = 8; 
+                pillar.height = 30; 
+                pillar.isSolid = true;
+                pillar.sprite = std::vector<std::string>(30, "||||||||");
+                obstacles.push_back(pillar);
+
+                // Platforms adjusted for lower jumps and shorter tower
+                for(int i = 0; i < 4; i++) {
+                    Obstacle plat;
+                    plat.width = 12; 
+                    plat.height = 1; 
+                    plat.isSolid = false;
+                    plat.sprite = {"------------"};
+                    plat.y = (float)groundLevel - 11 - (i * 5);
+                    
+                    if(i % 2 == 0) { // Left side
+                        plat.x = center - 16;
+                        if(i == 2) activeMobs.emplace_back(plat.x, plat.y - 5, MobType::SENTRY);
+                    } else {         // Right side
+                        plat.x = center + 12;
+                        if(i == 3) activeMobs.emplace_back(plat.x + 4, plat.y - 6, MobType::ARCHER);
+                    }
+                    obstacles.push_back(plat);
+                }
+                
+                activeMobs.emplace_back(startX + 15, spawnY, MobType::CHARGER);
+                break;
+            }
+
+        case 6: // CLAUSTROPHOBIA
+            {
+                // Ceiling adjusted slightly to avoid instant crush, physics fix will handle the phasing
+                Obstacle roof;
+                roof.x = startX + 15; 
+                roof.y = (float)groundLevel - 15; 
+                roof.width = 90; 
+                roof.height = 5; 
+                roof.isSolid = true;
+                roof.sprite = std::vector<std::string>(5, std::string(90, '='));
+                obstacles.push_back(roof);
+
+                // Added spike patches on the ground forcing the player to interrupt their slide
+                for(int i = 0; i < 2; i++) {
+                    Obstacle block;
+                    block.x = startX + 35 + (i * 40);
+                    block.y = (float)groundLevel - 2;
+                    block.width = 8; 
+                    block.height = 2; 
+                    block.isSolid = true;
+                    block.isHazard = false; 
+                    block.sprite = {"|||||||||", "||||||||"};
+                    obstacles.push_back(block);
+                    
+                    // Sentry placed right after the spikes to ambush the stand-up
+                    activeMobs.emplace_back(block.x + 15, (float)groundLevel - 5, MobType::SENTRY);
+                }
+                
+                activeMobs.emplace_back(startX + 110, spawnY, MobType::ARCHER);
                 break;
             }
         }
@@ -146,39 +249,54 @@ void World::updateWorld(float deltaTime, Character& player) {
     // Status Timers
     if (player.iFrameTimer > 0) player.iFrameTimer -= deltaTime;
 
-    // 3. SOLID WALL & PLATFORM LOGIC (Directional Collision)
+    // 3. SOLID WALL, PLATFORM & HAZARD LOGIC
     for (auto& obs : obstacles) {
         obs.x -= currentSpeed;
         
-        if (obs.isSolid) {
-            // Hitbox definitions
-            float pTop = (player.currentState == CharState::CROUCHING) ? player.y + 3 : player.y;
-            float pBottom = player.y + 6;
-            float pLeft = player.x, pRight = player.x + player.spriteWidth;
-            
-            float oTop = obs.y, oBottom = obs.y + obs.height;
-            float oLeft = obs.x, oRight = obs.x + obs.width;
+        float pTop = (player.currentState == CharState::CROUCHING) ? player.y + 3 : player.y;
+        float pBottom = player.y + 6;
+        float pLeft = player.x, pRight = player.x + player.spriteWidth;
+        
+        float oTop = obs.y, oBottom = obs.y + obs.height;
+        float oLeft = obs.x, oRight = obs.x + obs.width;
 
-            // AABB Overlap check
+        // Hazard Collision (Spikes)
+        if (obs.isHazard) {
+            if (pBottom > oTop && pTop < oBottom && pRight > oLeft && pLeft < oRight) {
+                if (player.iFrameTimer <= 0) {
+                    player.health--;
+                    player.iFrameTimer = 1.5f;
+                    if (player.health <= 0) gameOver = true;
+                }
+            }
+        }
+
+        // Solid Collision (Walls & Ceilings)
+        if (obs.isSolid) {
             if (pBottom > oTop && pTop < oBottom && pRight > oLeft && pLeft < oRight) {
                 float overlapLeft = pRight - oLeft;
                 float overlapRight = oRight - pLeft;
+                float overlapTop = oBottom - pTop;
 
-                // Horizontal resolution (only if not landing on top)
-                if (pBottom > oTop + 1.5f) { 
-                    // Pushed from Left side
+                // Ceiling Collision: Hitting head while jumping up
+                if (player.velocityY < 0 && overlapTop < 4.0f && overlapLeft > 2.0f && overlapRight > 2.0f) {
+                    player.y = oBottom; 
+                    if (player.currentState == CharState::CROUCHING) player.y -= 3;
+                    player.velocityY = 0; // Kill upward momentum
+                }
+                // Horizontal resolution
+                else if (pBottom > oTop + 1.5f) { 
                     if (overlapLeft < overlapRight && overlapLeft < 6.0f) {
-                        player.x = oLeft - player.spriteWidth;
+                        player.x = oLeft - player.spriteWidth; // Pushed left
                     } 
-                    // Pushed from Right side
                     else if (overlapRight < overlapLeft && overlapRight < 6.0f) {
-                        player.x = oRight;
+                        player.x = oRight; // Pushed right
                     }
                 }
             }
         }
 
-        // ONE-WAY LANDING
+        // ONE-WAY LANDING (Unchanged)
         if (player.velocityY >= 0) {
             bool withinX = (player.x + 6 > obs.x && player.x + 2 < obs.x + obs.width);
             float feet = player.y + 6;
@@ -236,7 +354,7 @@ void World::updateWorld(float deltaTime, Character& player) {
         if (m.type == MobType::SENTRY) {
             int frame = (int)(m.animTimer * 10) % 20;
             if (frame >= 10) { 
-                if (player.x < m.x && player.x > m.x - 14.0f && std::abs(player.y - m.y) < 4 && player.iFrameTimer <= 0) {
+                if (player.x < m.x && player.x > m.x - 10.0f && std::abs(player.y - m.y) < 3 && player.iFrameTimer <= 0) {
                     player.health--; 
                     player.iFrameTimer = 1.5f;
                     if (player.health <= 0) gameOver = true;
@@ -275,38 +393,25 @@ void World::updateWorld(float deltaTime, Character& player) {
         
         // Melee Attack vs Mob
         if (player.isMeleeAttacking) {
-            float swordRange = 8.0f; // 8 tile range horizontally
-            float swordX = player.facingRight ? player.x + 9 : player.x - 8; // Sword starting position
+            float spearRange = 10.0f;
             
-            // Sword arc (from top to bottom position) - only hits in the lower half of the swing
-            float hitboxTop = player.y - 3;
-            float hitboxBottom = player.y + 6;
+            // Tighter vertical hitbox
+            float hitboxTop = player.y + 2.0f;
+            float hitboxBottom = player.y + 5.0f;
             
-            // Check collision: sword reaches the mob position horizontally and vertically
-            if (player.facingRight) {
-                if (swordX <= m.x + m.width && swordX >= m.x - swordRange &&
-                    m.y + m.height > hitboxTop && m.y < hitboxBottom) {
-                    m.health--; 
-                    if (m.health <= 0) { 
-                        m.isDead = true; 
-                        score++; 
-                        // Grant ammo on kill
-                        if (player.currentAmmo < player.maxAmmo) {
-                            player.currentAmmo++;
-                        }
-                    }
-                }
-            } else {
-                if (swordX >= m.x && swordX <= m.x + m.width + swordRange &&
-                    m.y + m.height > hitboxTop && m.y < hitboxBottom) {
-                    m.health--; 
-                    if (m.health <= 0) { 
-                        m.isDead = true; 
-                        score++; 
-                        // Grant ammo on kill
-                        if (player.currentAmmo < player.maxAmmo) {
-                            player.currentAmmo++;
-                        }
+            float spearStartX = player.facingRight ? player.x + 9 : player.x - spearRange;
+            float spearEndX = player.facingRight ? player.x + 9 + spearRange : player.x;
+            
+            // Check collision: Does the spear's horizontal line intersect the mob's body?
+            if (m.x <= spearEndX && m.x + m.width >= spearStartX &&
+                m.y + m.height > hitboxTop && m.y < hitboxBottom) {
+                m.health--; 
+                if (m.health <= 0) { 
+                    m.isDead = true; 
+                    score++; 
+                    // Grant ammo on kill
+                    if (player.currentAmmo < player.maxAmmo) {
+                        player.currentAmmo++;
                     }
                 }
             }
@@ -402,11 +507,11 @@ void World::drawFrame(const Character& player) {
         std::vector<std::string> axeFrames[] = {
             {"        ", "        ", "--     ", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "-----  ", "        ", "        ", "        ", "        ", "        "},
-            {"        ", "        ", "--------", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "------->", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "---------->", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "----------->", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "---------->", "        ", "        ", "        ", "        ", "        "},
-            {"        ", "        ", "--------", "        ", "        ", "        ", "        ", "        "},
+            {"        ", "        ", "------->", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "-----  ", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "--     ", "        ", "        ", "        ", "        ", "        "},
             {"        ", "        ", "       ", "        ", "        ", "        ", "        ", "        "}

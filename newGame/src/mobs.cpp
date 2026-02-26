@@ -6,8 +6,8 @@ Mob::Mob(float startX, float startY, MobType t) : x(startX), y(startY), type(t) 
     shootTimer = 0.0f; animTimer = 0.0f;
 
     switch (type) {
-        case MobType::SENTRY: health = 4; speed = 0; break;
-        case MobType::CHARGER: health = 3; speed = 1.2f; break;
+        case MobType::SENTRY: health = 3; speed = 0; break;
+        case MobType::CHARGER: health = 4; speed = 1.2f; break;
         case MobType::ARCHER: health = 2; speed = 0; break;
     }
     updateAnimation(startX + 100); 
@@ -32,7 +32,6 @@ void Mob::updateAnimation(float playerX) {
     float dist = std::abs(x - playerX);
 
     if (type == MobType::ARCHER) {
-        // --- ARTIK GÖTÜNDE ÇIKINTI OLMAYAN OKÇU ---
         if (shootTimer >= 1.2f) { // Gerilme
             sprite = { 
                 "      ( )  ", 

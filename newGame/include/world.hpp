@@ -11,7 +11,8 @@ struct Obstacle {
     float x, y;
     int width, height;
     std::vector<std::string> sprite;
-    bool isSolid; 
+    bool isSolid = true;
+    bool isHazard = false;
 };
 
 class World {
