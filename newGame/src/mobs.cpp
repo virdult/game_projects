@@ -32,7 +32,7 @@ void Mob::updateAnimation(float playerX) {
     float dist = std::abs(x - playerX);
 
     if (type == MobType::ARCHER) {
-        if (shootTimer >= 1.2f) { // Gerilme
+        if (shootTimer >= 1.2f) {
             sprite = { 
                 "      ( )  ", 
                 "    __|_\\  ", 
@@ -53,7 +53,6 @@ void Mob::updateAnimation(float playerX) {
         }
     } 
     else if (type == MobType::CHARGER) {
-        // --- KALKANI YUKARIDA TUTAN CHARGER ---
         if (isCharging) { 
             sprite = { "     ( )_  ", "    /|_|[| ", "   / | |[| ", "  /  |_|[| ", " _\\_  /    ", " \\__\\/     " }; 
         } else if (dist < 70.0f && !hasCharged) { 
@@ -67,12 +66,11 @@ void Mob::updateAnimation(float playerX) {
         }
     }
     else if (type == MobType::SENTRY) {
-        // --- 10 GERİ 10 İLERİ MIZRAKÇI (SOPASIZ DEĞİL) ---
         if (dist < 25.0f) { 
             animTimer += 0.04f; 
             int frame = (int)(animTimer * 10) % 20;
 
-            if (frame < 10) { // 10 KARE GERİ ÇEKİLME
+            if (frame < 10) {
                 sprite = {
                     "      ( )       ",
                     "     /| \\_      ",
@@ -80,7 +78,7 @@ void Mob::updateAnimation(float playerX) {
                     "     / \\        ",
                     "    /   \\       "
                 };
-            } else { // 10 KARE İLERİ SAPLAMA
+            } else {
                 sprite = {
                     "      ( )       ",
                     "     /| \\_      ",
@@ -89,7 +87,7 @@ void Mob::updateAnimation(float playerX) {
                     "    /   \\       "
                 };
             }
-        } else { // IDLE MIZRAKÇI
+        } else {
             animTimer = 0;
             sprite = {
                 "      ( )       ",

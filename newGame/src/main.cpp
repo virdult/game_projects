@@ -9,25 +9,60 @@ int main() {
     SDL_Window* window = SDL_CreateWindow("Input", 0, 0, 1, 1, SDL_WINDOW_SHOWN);
     World gameWorld(204, 55);
     Character player(40.0f, gameWorld.getGroundLevel() - 6);
-    bool isRunning = true; SDL_Event e; const float fTime = 0.030f;
+    bool isRunning = true; 
+    SDL_Event e; 
+    const float fTime = 0.030f;
 
     while (isRunning) {
-        while (SDL_PollEvent(&e)) if (e.type == SDL_QUIT) isRunning = false;
-        const Uint8* state = SDL_GetKeyboardState(NULL);
-        if (state[SDL_SCANCODE_Q]) isRunning = false;
+        // 1. Single Key Press Event Loop
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) isRunning = false;
+            
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.scancode == SDL_SCANCODE_Q) isRunning = false;
+                
+                if (gameWorld.currentState == GameState::MENU) {
+                    if (e.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+                        gameWorld.reset(player);
+                        gameWorld.currentState = GameState::PLAYING;
+                    }
+                    if (e.key.keysym.scancode == SDL_SCANCODE_S) {
+                        gameWorld.currentState = GameState::HIGHSCORES;
+                    }
+                } 
+                else if (gameWorld.currentState == GameState::HIGHSCORES) {
+                    if (e.key.keysym.scancode == SDL_SCANCODE_M) {
+                        gameWorld.currentState = GameState::MENU;
+                    }
+                } 
+                else if (gameWorld.currentState == GameState::GAMEOVER) {
+                    if (e.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+                        gameWorld.reset(player);
+                        gameWorld.currentState = GameState::PLAYING;
+                    }
+                    if (e.key.keysym.scancode == SDL_SCANCODE_M) {
+                        gameWorld.currentState = GameState::MENU;
+                    }
+                }
+            }
+        }
 
-        if (!gameWorld.gameOver) {
+        // 2. Continuous Key Hold Loop
+        const Uint8* state = SDL_GetKeyboardState(NULL);
+
+        if (gameWorld.currentState == GameState::PLAYING) {
             bool mL = state[SDL_SCANCODE_A], mR = state[SDL_SCANCODE_D], iC = state[SDL_SCANCODE_S];
             bool currentEKey = state[SDL_SCANCODE_E];
             
             if (state[SDL_SCANCODE_W]) player.jump();
+            
             if (state[SDL_SCANCODE_SPACE] && gameWorld.cooldownTimer <= 0 && player.currentAmmo > 0) {
                 float shotY = iC ? (player.y + 4) : (player.y + 2);
                 gameWorld.activeProjectiles.emplace_back(player.x + 7, shotY, 4.0f);
-                player.currentAmmo--; gameWorld.cooldownTimer = 0.20f;
+                player.currentAmmo--; 
+                gameWorld.cooldownTimer = 0.20f;
             }
             
-            // Melee attack on key press (not hold)
             if (currentEKey && !player.wasEKeyPressed) {
                 player.startMeleeAttack();
             }
@@ -36,10 +71,12 @@ int main() {
             player.update(gameWorld.getGroundLevel(), 204, mL, mR, iC);
             gameWorld.updateWorld(fTime, player);
             if (gameWorld.cooldownTimer > 0) gameWorld.cooldownTimer -= fTime;
-        } else if (state[SDL_SCANCODE_SPACE]) gameWorld.reset(player);
+        }
 
         gameWorld.drawFrame(player);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
-    SDL_Quit(); return 0;
+    
+    SDL_Quit(); 
+    return 0;
 }
