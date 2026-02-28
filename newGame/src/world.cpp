@@ -650,6 +650,8 @@ void World::updateWorld(float deltaTime, Character& player) {
         m.x -= currentSpeed; 
         m.update(deltaTime, player.x, player.y);
 
+        if (m.isDying) continue;
+
         // Spearman Thrust
         if (m.type == MobType::SENTRY) {
             int frame = (int)(m.animTimer * 10) % 20;
@@ -681,7 +683,7 @@ void World::updateWorld(float deltaTime, Character& player) {
                 m.health--; 
                 p.isDead = true;
                 if (m.health <= 0) { 
-                    m.isDead = true; 
+                    m.isDying = true;
                     score++; 
                     // Grant ammo on kill
                     if (player.currentAmmo < player.maxAmmo) {
@@ -707,7 +709,7 @@ void World::updateWorld(float deltaTime, Character& player) {
                 m.y + m.height > hitboxTop && m.y < hitboxBottom) {
                 m.health--; 
                 if (m.health <= 0) { 
-                    m.isDead = true; 
+                    m.isDying = true;
                     score++; 
                     // Grant ammo on kill
                     if (player.currentAmmo < player.maxAmmo) {

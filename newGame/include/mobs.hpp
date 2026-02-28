@@ -11,8 +11,8 @@ struct Mob {
     int health, width, height;
     MobType type;
     std::vector<std::string> sprite;
-    bool isDead = false, isCharging = false, hasCharged = false;
-    float shootTimer = 0.0f, animTimer = 0.0f;
+    bool isDead = false, isDying = false, isCharging = false, hasCharged = false;
+    float shootTimer = 0.0f, animTimer = 0.0f, deathTimer = 0.0f;
 
     Mob(float startX, float startY, MobType t);
     void update(float deltaTime, float playerX, float playerY);
